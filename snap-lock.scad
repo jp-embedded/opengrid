@@ -1,6 +1,9 @@
 lock = true;
 lid = true;
 stemfie = true;
+MultiConnect_Thread = true; // for multiconnect thread
+Vertical_Printing = false; // for vertical printing
+Human_Pin = true; // for human pin
 
 cell_size = 28;
 cell_wall_size = 1.5;
@@ -164,8 +167,10 @@ module thread(int = false)
 	}
 }
 
-module lid() 
+module lid(multiconnect=false, printing=false) 
 {
+	difference() {
+	union() {
 	difference() {
 		up(tile_height/2) cuboid([tile_size, tile_size, lid_height], anchor=TOP);
 		tile();
@@ -182,11 +187,18 @@ module lid()
 		up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = 22.5 - extra_angle/2), width=arc_w, $fn=75);
 	}
 
-	difference() {
+	difference() { 
 		zrot(45) thread();
+		if (printing) {
+			// cut bottom of thread to make it printable standing
+			fwd(thread_d/2 - 3) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
+		}
+	}
 
-		// cut bottom of thread to make it printable standing
-		fwd(thread_d/2 - 3) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
+	}
+	if (multiconnect) {
+		multiconnect_thread();
+	}
 	}
 
 }
@@ -220,39 +232,57 @@ module insert()
 
 }
 
-module lock() 
+module lock(manual_pin=false) 
 {
 	union() {
-      intersection() {
-         down(e) insert();
+		intersection() {
+			down(e) insert();
 
-	 up(0.3) union() {
-		 // cylinder that fits inside tile
-		 grove_cyl();
+		up(0.3) union() {
+			// cylinder that fits inside tile
+			grove_cyl();
 
-		 // Corners so it can only rotate 45 deg
-		 diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-		 rotate(90) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-		 rotate(180) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-		 rotate(270) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-	 }
+			// Corners so it can only rotate 45 deg
+			diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+			rotate(90) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+			rotate(180) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+			rotate(270) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+		}
 
-         // Cut cornes so it can be inserted at 45 degree
-         rotate(45) cuboid([cell_size - 3.5, cell_size - 3, lock_height - part_gap], chamfer =  0.4, anchor=BOTTOM);
-      }
+			// Cut cornes so it can be inserted at 45 degree
+			rotate(45) cuboid([cell_size - 3.5, cell_size - 3, lock_height - part_gap], chamfer =  0.4, anchor=BOTTOM);
 
+			
+		}
+
+		if (manual_pin) {
 	  		// pin to manually rotate the lock
 			arc_w = 1;
 			arc_d = 22;
 			angle = 5;
 			linear_extrude(height = tile_height/2+1) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
 			linear_extrude(height = lock_height+e) stroke(arc(d=arc_d, angle=angle, start = 22.5 + angle/2), width=arc_w/2, $fn=75);
+		}
 	}
 }
 
+module multiconnect_thread()
+{
+	profile = [
+		[-1.5/3, -1/3],
+		[-1.25/3, -1/3],
+		[-0.25/3,  0],
+		[ 0.25/3,  0],
+		[ 1.25/3, -1/3],
+		[ 1.5/3, -1/3]
+	];
+
+	down(2*e) generic_threaded_rod(d=16.5, l=tile_height, pitch=3, profile=profile, blunt_start=false, $fn=50, anchor=BOTTOM);
+}
+
 render() {
-	if(lid) up(0) lid();
-	if(lock) lock();
+	if(lid) up(0) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
+	if(lock) lock(manual_pin=Human_Pin);
 	if(stemfie) {
 		back(cell_height/2 - e) xrot(90) lid();
 		down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 3) zrot(90) beam_block(6);
