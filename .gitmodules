@@ -1,0 +1,6 @@
+[submodule "BOSL2"]
+	path = BOSL2
+	url = https://github.com/BelfrySCAD/BOSL2.git
+[submodule "Stemfie_OpenSCAD"]
+	path = Stemfie_OpenSCAD
+	url = https://github.com/Cantareus/Stemfie_OpenSCAD.git
