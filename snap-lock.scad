@@ -4,6 +4,7 @@ stemfie = true;
 MultiConnect_Thread = true; // for multiconnect thread
 Vertical_Printing = false; // for vertical printing
 Human_Pin = true; // for human pin
+Draw_Rotated = false; // for rotated view
 
 cell_size = 28;
 cell_wall_size = 1.5;
@@ -185,6 +186,8 @@ module lid(multiconnect=false, printing=false)
 		arc_d = 22;
 		extra_angle = 5;
 		up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = 22.5 - extra_angle/2), width=arc_w, $fn=75);
+
+
 	}
 
 	difference() { 
@@ -281,7 +284,8 @@ module multiconnect_thread()
 }
 
 render() {
-	if(lid) up(0) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
+	RotAngle = Draw_Rotated ? -45 : 0;
+	if(lid) zrot(RotAngle) up(0) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
 	if(lock) lock(manual_pin=Human_Pin);
 	if(stemfie) {
 		back(cell_height/2 - e) xrot(90) lid();
