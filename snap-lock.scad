@@ -1,10 +1,11 @@
 lock = true;
 lid = true;
-stemfie = true;
+stemfie = false;
 MultiConnect_Thread = true; // for multiconnect thread
 Vertical_Printing = false; // for vertical printing
 Human_Pin = true; // for human pin
 Draw_Rotated = false; // for rotated view
+print_in_place = true;
 
 cell_size = 28;
 cell_wall_size = 1.5;
@@ -38,7 +39,8 @@ snap_h = 3;
 snap_depth = 0.25;
 snap_compression = 0.1;
 
-lid_height = 1;
+//lid_height = 1;
+lid_height = 1.4;
 lock_height = tile_height/2 - lid_height;
 thread_d = 18;
 
@@ -123,15 +125,18 @@ module thread(int = false)
 
 	w = 1.0 + (int ? part_gap : -part_gap);
 	h = 2;
-	pitch_a = 0.1;
+	pitch_a = 0.2;
 	pitch_b = 0.1;
 	cut_gap = 0.02; // cut out oversize in percent
-	starts = 2;
+	starts = print_in_place ? 4 : 2;
+	turns = 0.25;
+   echo(starts);
+   echo(turns);
 
 	// profile is scaled by pitch, so devide by pitch to get specefied size
 	add_w = part_gap + e;
 	prof_a = [
-	    [ -1/pitch_a, -add_w/pitch_a ],	// the -2 is cut off below, part_gap subtracted to match cylinder
+	    [ -1/pitch_a, -add_w/pitch_a ],	// the -1 is cut off below, part_gap subtracted to match cylinder
 	    [ -1/pitch_a, w/pitch_a ],		// ""
 	    [ (h - (w+add_w)/slope)/pitch_a, w/pitch_a ],
 	    [ h/pitch_a, -add_w/pitch_a],	// part_gap subtracted to match cylinder
@@ -139,7 +144,7 @@ module thread(int = false)
 
 	// for cut out
 	prof_b = [
-	    [ -1/pitch_b, -add_w/pitch_b ],	// the -2 is cut off below, part_gap subtracted to match cylinder
+	    [ -1/pitch_b, -add_w/pitch_b ],	// the -1 is cut off below, part_gap subtracted to match cylinder
 	    [ -1/pitch_b, w/pitch_b ],		// ""
 	    [ 10/pitch_b, w/pitch_b ],
 	    [ 10/pitch_b, -add_w/pitch_b],	// part_gap subtracted to match cylinder
@@ -153,17 +158,19 @@ module thread(int = false)
 		//lead = int ? 0 : 1;
 		lead = 0;
 		union() {
-			thread_helix(d=thread_d, pitch=pitch_a, turns=1/(starts*2), starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int);
+			thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int);
 
 			// add thread at top. Only cut off in bottom needed
-			thread_helix(d=thread_d, pitch=pitch_a, turns=1/(starts*2), starts=starts, profile=prof_a, lead_in=lead, left_handed=0, internal = int);
+         if (!print_in_place) {
+            thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=0, internal = int);
+         }
 		}
 		cyl(h = 50, d = 50, anchor=TOP); // cut off bottom part
 	} 
  
 	// insert cut off
-	if (int) {
-		zrot(360/(starts*2) + 360/(starts*2) * cut_gap/2) thread_helix(d=thread_d, pitch=pitch_b, turns=1/(starts*2) * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int);
+	if (!print_in_place && int) {
+		zrot(360/(starts*2) + 360/(starts*2) * cut_gap/2) thread_helix(d=thread_d, pitch=pitch_b, turns=turns * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int);
 
 	}
 }
@@ -192,7 +199,7 @@ module lid(multiconnect=false, printing=false)
 
 	difference() { 
 		zrot(45) thread();
-		if (printing) {
+		if (printing || !print_in_place) {
 			// cut bottom of thread to make it printable standing
 			fwd(thread_d/2 - 3) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
 		}
