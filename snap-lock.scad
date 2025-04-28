@@ -4,6 +4,7 @@ stemfie = false;
 MultiConnect_Thread = true; // for multiconnect thread
 Vertical_Printing = false; // for vertical printing
 Human_Pin = true; // for human pin
+Human_Pin_Alt = true; // Test for alternative human pin
 Draw_Rotated = false; // for rotated view
 print_in_place = true;
 
@@ -188,11 +189,19 @@ module lid(multiconnect=false, printing=false)
 		ring_r = 1.5;
 		up(tile_height/2 - lid_height + part_gap) cyl(h = 2, d = thread_d + ring_r*2 + chamf*2 + part_gap, chamfer = chamf, anchor=TOP); // thread cylinder
 
-		// arc cut out
-		arc_w = 2.5;
-		arc_d = 22;
-		extra_angle = 5;
-		up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = 22.5 - extra_angle/2), width=arc_w, $fn=75);
+      // arc cut out
+      if (Human_Pin_Alt) {
+         arc_w = 3.5;
+         arc_d = 22;
+         extra_angle = 5;
+         up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = 45 + 22.5 - extra_angle/2), width=arc_w, $fn=75);
+      }
+      else {
+         arc_w = 2.5;
+         arc_d = 22;
+         extra_angle = 5;
+         up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = 22.5 - extra_angle/2), width=arc_w, $fn=75);
+      }
 
 
 	}
@@ -230,11 +239,14 @@ module insert()
 		}
 		tile();
 		up(-e) zrot(45) thread(true);
-		// arc cut out
-		arc_w = 1.5;
-		arc_d = 22;
-		angle = 5;
-		linear_extrude(height = 10) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
+
+      if (!Human_Pin_Alt) {
+         // arc cut out
+         arc_w = 1.5;
+         arc_d = 22;
+         angle = 5;
+         linear_extrude(height = 10) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
+      }
 		
 	}
 
@@ -269,12 +281,25 @@ module lock(manual_pin=false)
 		}
 
 		if (manual_pin) {
-	  		// pin to manually rotate the lock
-			arc_w = 1;
-			arc_d = 22;
-			angle = 5;
-			linear_extrude(height = tile_height/2+1) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
-			linear_extrude(height = lock_height+e) stroke(arc(d=arc_d, angle=angle, start = 22.5 + angle/2), width=arc_w/2, $fn=75);
+         if (Human_Pin_Alt) {
+            // pin to manually rotate the lock
+            arc_w = 3;
+            arc_d = 22;
+            angle = 5;
+            angle2 = 2;
+            difference() {
+               up(1) linear_extrude(height = tile_height/2 - 1) stroke(arc(d=arc_d, angle=angle, start = 45 + 22.5 - angle/2), width=arc_w, $fn=75);
+               up(tile_height/2 - 0.5 + e) linear_extrude(height = 0.5) stroke(arc(d=arc_d, angle=angle2, start = 45 + 22.5 - angle2/2), width=arc_w, endcap_length = 0, $fn=75);
+            }
+         }
+         else {
+            // pin to manually rotate the lock
+            arc_w = 1;
+            arc_d = 22;
+            angle = 5;
+            linear_extrude(height = tile_height/2+1) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
+            linear_extrude(height = lock_height+e) stroke(arc(d=arc_d, angle=angle, start = 22.5 + angle/2), width=arc_w/2, $fn=75);
+         }
 		}
 	}
 }
