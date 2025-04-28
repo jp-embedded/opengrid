@@ -253,16 +253,19 @@ module lock(manual_pin=false)
 			grove_cyl();
 
 			// Corners so it can only rotate 45 deg
-			diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-			rotate(90) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-			rotate(180) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
-			rotate(270) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+			diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+			rotate(90) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+			rotate(180) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+			rotate(270) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
 		}
 
-			// Cut cornes so it can be inserted at 45 degree
-			rotate(45) cuboid([cell_size - 3.5, cell_size - 3, lock_height - part_gap], chamfer =  0.4, anchor=BOTTOM);
+         union() {
+            // Cut cornes so it can be inserted at 45 degree
+            rotate(45) cuboid([cell_size - 3, cell_size - 3, lock_height - part_gap], chamfer =  0.4, anchor=BOTTOM);
 
-			
+            // Don't cut ring
+            cyl(h = 10, d = tile_size - 4);
+         }
 		}
 
 		if (manual_pin) {
