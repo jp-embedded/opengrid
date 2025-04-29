@@ -5,8 +5,9 @@ MultiConnect_Thread = true; // for multiconnect thread
 Vertical_Printing = false; // for vertical printing
 Human_Pin = true; // for human pin
 Human_Pin_Alt = true; // Test for alternative human pin
-Draw_Rotated = false; // for rotated view
+Draw_Locked = false; // for rotated view
 print_in_place = true;
+cross_view = false;
 
 cell_size = 28;
 cell_wall_size = 1.5;
@@ -45,7 +46,7 @@ lid_height = 1.4;
 lock_height = tile_height/2 - lid_height;
 thread_d = 18;
 
-part_gap = 0.1;
+part_gap = 0.2;
 
 module tile()
 {
@@ -126,13 +127,11 @@ module thread(int = false)
 
 	w = 1.0 + (int ? part_gap : -part_gap);
 	h = 2;
-	pitch_a = 0.2;
+	pitch_a = 1.5;
 	pitch_b = 0.1;
 	cut_gap = 0.02; // cut out oversize in percent
-	starts = print_in_place ? 4 : 2;
-	turns = 0.25;
-   echo(starts);
-   echo(turns);
+	starts = print_in_place ? 1 : 2;
+	turns = print_in_place ? 0.999 : 0.25; // will fail for 1 turn since the begin and end collide
 
 	// profile is scaled by pitch, so devide by pitch to get specefied size
 	add_w = part_gap + e;
@@ -159,11 +158,19 @@ module thread(int = false)
 		//lead = int ? 0 : 1;
 		lead = 0;
 		union() {
-			thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int);
+         if (print_in_place) {
+            zrot(247.5) thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int, $fn=128);
+
+            // fix the tiny gap becasue turns is just uder 1
+            zrot(247) thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int, $fn=128);
+         }
+         else {
+            thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int, $fn=128);
+         }
 
 			// add thread at top. Only cut off in bottom needed
          if (!print_in_place) {
-            thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=0, internal = int);
+            thread_helix(d=thread_d, pitch=pitch_a, turns=turns, starts=starts, profile=prof_a, lead_in=lead, left_handed=0, internal = int, $fn=128);
          }
 		}
 		cyl(h = 50, d = 50, anchor=TOP); // cut off bottom part
@@ -171,8 +178,11 @@ module thread(int = false)
  
 	// insert cut off
 	if (!print_in_place && int) {
-		zrot(360/(starts*2) + 360/(starts*2) * cut_gap/2) thread_helix(d=thread_d, pitch=pitch_b, turns=turns * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int);
-
+		zrot(360/(starts*2) + 360/(starts*2) * cut_gap/2) thread_helix(d=thread_d, pitch=pitch_b, turns=turns * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int, $fn=128);
+	}
+	if (print_in_place && int) {
+      t = 1/8 + cut_gap;
+		zrot(247.5 + (360 * cut_gap / 2)) thread_helix(d=thread_d, pitch=pitch_b, turns=t * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int, $fn=128);
 	}
 }
 
@@ -186,7 +196,7 @@ module lid(multiconnect=false, printing=false)
 	
 		// Add gap between lid and lock
 		chamf = 1;
-		ring_r = 1.5;
+		ring_r = 2;
 		up(tile_height/2 - lid_height + part_gap) cyl(h = 2, d = thread_d + ring_r*2 + chamf*2 + part_gap, chamfer = chamf, anchor=TOP); // thread cylinder
 
       // arc cut out
@@ -232,7 +242,7 @@ module insert()
 
 			// ring matching lid ring
 			chamf = 1;
-			ring_r = 1.5;
+			ring_r = 2;
 			up(tile_height/2 - lid_height) cyl(h = 2, d = thread_d + ring_r*2 + chamf*2 - part_gap, chamfer = chamf, anchor=TOP); // thread cylinder
 		
 
@@ -319,13 +329,18 @@ module multiconnect_thread()
 }
 
 render() {
-	RotAngle = Draw_Rotated ? -45 : 0;
-	if(lid) zrot(RotAngle) up(0) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
-	if(lock) lock(manual_pin=Human_Pin);
-	if(stemfie) {
-		back(cell_height/2 - e) xrot(90) lid();
-		down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 3) zrot(90) beam_block(6);
-	}
+   difference() {
+      union() {
+         RotAngle = Draw_Locked ? 0 : -45;
+         if(lid) zrot(RotAngle) up(0) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
+         if(lock) lock(manual_pin=Human_Pin);
+         if(stemfie) {
+            back(cell_height/2 - e) xrot(90) lid();
+            down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 3) zrot(90) beam_block(6);
+         }
+      }
+      if (cross_view) cuboid([50, 50, 10], anchor=BACK); 
+   }
 }
 
 
