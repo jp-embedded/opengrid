@@ -1,6 +1,8 @@
 lock = true;
 lid = true;
-stemfie = true;
+stemfie = false;
+
+/* [Hidden] */
 
 cell_size = 28;
 cell_wall_size = 1.5;
@@ -206,7 +208,7 @@ module insert()
 		tile();
 		up(-e) zrot(45) thread(true);
 		// arc cut out
-		arc_w = 1;
+		arc_w = 1.5;
 		arc_d = 22;
 		angle = 5;
 		linear_extrude(height = 10) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
