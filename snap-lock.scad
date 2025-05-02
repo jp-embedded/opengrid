@@ -2,6 +2,7 @@ lock = true;
 lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
 part_gap = 0.3;
+part_gap_bottom = 0.4;
 
 /* [For debugging] */
 
@@ -113,7 +114,7 @@ module corner_cyl(h = 4)
 {
 	// sizes here just set to eyeball
 	slope = 1.1;
-	d = cell_size;
+	d = cell_size - 1;
 	chamf_h = h/2 - 1;
 	chamf_w = chamf_h * slope; 
 	diff() cyl(h = h, d = d) edge_profile() mask2d_chamfer(x = chamf_w, y = chamf_h);
@@ -474,7 +475,7 @@ module round_insert()
 
 module lid_cut(lock = true)
 {
-	gap = lock ? -part_gap : part_gap;
+	gap = lock ? -part_gap_bottom : part_gap_bottom;
 	up(gap) corner_cyl(tile_height);
 	cyl(d = thread_od + gap, height = cell_height);
 }
@@ -490,7 +491,7 @@ module case()
 
 		difference() {
 			lid_cut(false);
-			up(edge_bottom - part_gap/2) cuboid([tile_size, tile_size, tile_height], anchor=TOP);
+			up(edge_bottom - part_gap_bottom/2) cuboid([tile_size, tile_size, tile_height], anchor=TOP);
 		}
 
 	}
@@ -502,7 +503,7 @@ module case()
 
 module lock2()
 {
-	h = cell_height/2 - edge_bottom - part_gap/2;
+	h = cell_height/2 - edge_bottom - part_gap_bottom/2;
 
 	difference() {
 
@@ -519,13 +520,12 @@ module lock2()
 				lid_cut();
 			}
 		}
-		//cyl(d = thread_id + part_gap, height = tile_height, anchor=BOTTOM); // cut inner cyl
-		up(edge_bottom + part_gap/2) cuboid([50, 50, 10], anchor=TOP); // cut bottom
+		up(edge_bottom + part_gap_bottom/2) cuboid([50, 50, 10], anchor=TOP); // cut bottom
 
 		// thread
 		zrot(45) thread2(true);
 
-		angle2 = 5;
+		angle2 = 10;
 		recess = 0.5;
 		up(tile_height/2 - recess) linear_extrude(height = 0.8) stroke(arc(d=(thread_id+thread_od)/2, angle=angle2, start = 45 + 22.5 - angle2/2), width=(thread_od-thread_id)/2, endcap_length = 0);
 	}
