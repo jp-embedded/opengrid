@@ -235,8 +235,8 @@ module thread2(int = false)
 	pitch_a = 1;
 	pitch_b = 0.1;
 	cut_gap = 0.02; // cut out oversize in percent
-	starts = 2;
-	turns = 1 / starts;
+	starts = 1;
+	turns = 1 / starts - 0.001;
 
 	// profile is scaled by pitch, so devide by pitch to get specefied size
 	add_w = part_gap + e;
@@ -507,7 +507,9 @@ module lock2()
 {
 	h = cell_height/2 - edge_bottom - part_gap_bottom/2;
 
-	difference() {
+	lift = 0.3;	
+
+	up(lift) difference() {
 
 		union() {
 			intersection() {
@@ -523,12 +525,14 @@ module lock2()
 			}
 		}
 		up(edge_bottom + part_gap_bottom/2) cuboid([50, 50, 10], anchor=TOP); // cut bottom
+		
+		up(tile_height/2 - lift) cuboid([50, 50, 10], anchor=BOTTOM); // cut lifted top
 
 		// thread
 		zrot(45) thread2(true);
 
 		angle2 = 10;
-		recess = 0.5;
+		recess = 0.7;
 		up(tile_height/2 - recess) linear_extrude(height = 0.8) stroke(arc(d=(thread_id+thread_od)/2, angle=angle2, start = 45 + 22.5 - angle2/2), width=(thread_od-thread_id)/2, endcap_length = 0);
 	}
 
