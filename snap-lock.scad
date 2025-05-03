@@ -491,7 +491,9 @@ module case()
 
 		difference() {
 			lid_cut(false);
-			up(edge_bottom - part_gap_bottom/2) cuboid([tile_size, tile_size, tile_height], anchor=TOP);
+			//up(edge_bottom - part_gap_bottom/2) cuboid([tile_size, tile_size, tile_height], anchor=TOP);
+			zrot(45) up(edge_bottom - part_gap_bottom/2) cuboid([10, tile_size, tile_height], anchor=TOP);
+			zrot(90+45) up(edge_bottom - part_gap_bottom/2) cuboid([10, tile_size, tile_height], anchor=TOP);
 		}
 
 	}
