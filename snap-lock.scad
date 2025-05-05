@@ -1,8 +1,8 @@
 lock = true;
 lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
-part_gap = 0.3;
-part_gap_bottom = 0.4;
+part_gap = 0.2;
+part_gap_bottom = 0.2;
 
 /* [For debugging] */
 
@@ -286,6 +286,31 @@ module thread2(int = false)
 				}
 }
 
+module thread3(int = false)
+{
+   difference() {
+      union() {
+         h = tile_height/2; // 3.4
+         slope = 0.7;
+         chamf_h = 1;
+         chamf_w = chamf_h * slope; 
+         gap = int ? part_gap : -part_gap;
+         dia = thread_id + gap;
+
+         // center cylinder
+         cyl(d = dia, height = tile_height/2, anchor=BOTTOM);
+
+         // thread
+         up(0.5 - gap/2 / slope /*no gap on horontal part*/) diff() cyl(h = h, d = dia + chamf_w*2) edge_profile() mask2d_chamfer(x = chamf_w, y = chamf_h);
+      }
+
+      // cut off top & bottom part
+      up(tile_height/2) cyl(h = 50, d = 50, anchor=BOTTOM); 
+      cyl(h = 50, d = 50, anchor=TOP); 
+
+   }
+}
+
 module lid(multiconnect=false, printing=false) 
 {
 	difference() {
@@ -461,7 +486,7 @@ module multiconnect_thread()
 	down(0.1) generic_threaded_rod(d=16.5, l=tile_height, pitch=3, profile=profile, blunt_start=false, $fn=50, anchor=BOTTOM);
 }
 
-edge_side = 1;
+edge_side = 0.5;
 edge_bottom = 0.6;
 thread_id = 18;
 thread_od = tile_size - 3 - edge_side;
@@ -496,10 +521,13 @@ module case()
 			zrot(90+45) up(edge_bottom - part_gap_bottom/2) cuboid([10, tile_size, tile_height], anchor=TOP);
 		}
 
+      up(edge_bottom + e) cuboid([50, part_gap, 10], anchor = BOTTOM);
+      zrot(90) up(edge_bottom + e) cuboid([50, part_gap, 10], anchor = BOTTOM);
+
 	}
 
 	// thread
-	zrot(45) thread2(false);
+	zrot(45) thread3(false);
 }
 
 
@@ -507,7 +535,7 @@ module lock2()
 {
 	h = cell_height/2 - edge_bottom - part_gap_bottom/2;
 
-	lift = 0.3;	
+	lift = 0;	
 
 	up(lift) difference() {
 
@@ -529,7 +557,7 @@ module lock2()
 		up(tile_height/2 - lift) cuboid([50, 50, 10], anchor=BOTTOM); // cut lifted top
 
 		// thread
-		zrot(45) thread2(true);
+		zrot(45) thread3(true);
 
 		angle2 = 10;
 		recess = 0.7;
