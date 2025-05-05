@@ -559,9 +559,9 @@ module lock2()
 		// thread
 		zrot(45) thread3(true);
 
-		angle2 = 10;
-		recess = 0.7;
-		up(tile_height/2 - recess) linear_extrude(height = 0.8) stroke(arc(d=(thread_id+thread_od)/2, angle=angle2, start = 45 + 22.5 - angle2/2), width=(thread_od-thread_id)/2, endcap_length = 0);
+		angle2 = 20;
+		recess = 1;
+		up(tile_height/2 - recess) linear_extrude(height = 2) stroke(arc(d=(thread_id+thread_od)/2, angle=angle2, start = 45 + 22.5 - angle2/2), width=(thread_od-thread_id)/2, endcap_length = 0);
 	}
 
 }
