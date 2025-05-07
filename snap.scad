@@ -634,8 +634,10 @@ module lock4()
       right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
 
       // cut for snap
-      down(1) zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
-      down(1) zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+      down(0.5) {
+         zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+         zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+      }
    }
    top_snap();
    zrot(-90) side_snap();
