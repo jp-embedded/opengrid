@@ -598,7 +598,7 @@ module lock3()
       //cuboid([tile_size, tile_size, tile_height/2+e], anchor=LEFT+BOTTOM);
 }
 
-module side_snap()
+module top_snap()
 {
    difference() {
 
@@ -609,18 +609,14 @@ module side_snap()
 
 }
 
-module side_snap_lite()
+module side_snap()
 {
    snap_l = 5;
-   /*
+   flatten = 0.4;
    difference() {
-
-      left(tile_size/2) cuboid([2, snap_l, tile_height/2+e], anchor=BOTTOM+LEFT);
-      tile(grove = true);
+      left(tile_size/2 - 1.5) diff() cuboid([1.4, snap_l, 2], anchor=BOTTOM) edge_profile(except=[FRONT+TOP,FRONT+BOTTOM,BACK+TOP,BACK+BOTTOM]) mask2d_chamfer(x = 0.7, y = 1);
+      left(tile_size/2 - 1.5 + 1.4 - flatten) cuboid([1.4, snap_l, 2], anchor=BOTTOM);
    }
-   */
-   // todo don't chamf corners. flatten a bit
-  left(tile_size/2 - 1.5) diff() cuboid([1.4, snap_l, 2], anchor=BOTTOM) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
 
 }
 
@@ -639,9 +635,11 @@ module lock4()
 
       // cut for snap
       down(1) zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+      down(1) zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
    }
-   //side_snap();
-   zrot(90) side_snap_lite();
+   top_snap();
+   zrot(-90) side_snap();
+   zrot(90) side_snap();
 }
 
 module slide_lock()
