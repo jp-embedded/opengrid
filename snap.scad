@@ -633,13 +633,16 @@ module lock4()
       x = tile_size/2 - cell_wall_size + cell_chamfer - chamf;
       right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
 
+      // cut top to make it symetrical
+      zrot(180) right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
+
       // cut for snap
       down(0.5) {
          zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
          zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
       }
    }
-   top_snap();
+   //top_snap();
    zrot(-90) side_snap();
    zrot(90) side_snap();
 }
@@ -654,8 +657,20 @@ module snap()
    lock4();
 }
 
+module corner(h)
+{
+   //corner_chamfer = 0.4;
+   corner_chamfer = 1;
+
+   cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT); // wall
+   zrot(90) cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT); // wall
+   cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]); // corner
+   back(tile_size) yrot(90) snap();
+
+}
+
 render() {
-   snap();
+   corner(3);
 }
 
 
