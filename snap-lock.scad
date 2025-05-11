@@ -1,8 +1,9 @@
 lock = true;
 lid = true;
+pin = true;
 MultiConnect_Thread = false; // for multiconnect thread
-part_gap = 0.3;
-part_gap_bottom = 0.4;
+part_gap = 0.1;
+part_gap_bottom = 0.1;
 
 /* [For debugging] */
 
@@ -16,7 +17,7 @@ stemfie = false;
 Vertical_Printing = false; // for vertical printing
 Human_Pin = false; // for human pin
 Human_Pin_Alt = false; // Test for alternative human pin
-print_in_place = true;
+print_in_place = false;
 
 cell_size = 28;
 cell_wall_size = 1.5;
@@ -42,12 +43,6 @@ tile_size = 28;
 tile_height = 6.8;
 tile_edge_width = 1.5;
 tile_chamfer = 0.4;
-
-snap_l = tile_height/2;
-snap_w = 5;
-snap_h = 3;
-snap_depth = 0.25;
-snap_compression = 0.1;
 
 lid_height = 1.4;
 lock_height = tile_height/2 - lid_height;
@@ -153,14 +148,6 @@ module mount_round()
       }
 }
 
-module dovetails()
-{
-	zrot(45) zrot_copies(n=2) left(12) down(cell_height/4  ) {
-		rabbit_clip(type="socket",length=snap_l, width=snap_w,snap=snap_depth,thickness=1.0, depth=snap_h + 0.4, lock=false,compression=snap_compression, anchor=TOP);
-	}
-
-}
-	
 module thread(int = false)
 {
 	slope = 1; // same slope as cell grove
@@ -313,9 +300,13 @@ module lid(multiconnect=false, printing=false)
 				}
 				else {
 					arc_w = 2.5;
-					arc_d = 22;
-					extra_angle = 5;
-					up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = 22.5 - extra_angle/2), width=arc_w, $fn=75);
+					arc_d = 23;
+					extra_angle = 15;
+					start = 67.5;
+					up(lock_height-e) linear_extrude(height = 10) stroke(arc(d=arc_d, angle=45 + extra_angle, start = start - extra_angle/2), width=arc_w, $fn=75);
+					// cut the sharp top 
+					a = 45 * 0.9;
+					up(lock_height-e) linear_extrude(height = 5) stroke(arc(d=arc_d+arc_w, angle=a, start = 90 - a/2), width=arc_w, endcaps = "square", $fn=75);
 				}
 
 
@@ -325,7 +316,7 @@ module lid(multiconnect=false, printing=false)
 				zrot(45) thread();
 				if (printing || !print_in_place) {
 					// cut bottom of thread to make it printable standing
-					fwd(thread_d/2 - 3) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
+					fwd(thread_d/2 - 4) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
 				}
 			}
 
@@ -335,6 +326,22 @@ module lid(multiconnect=false, printing=false)
 		}
 	}
 }
+// Snaps
+snap_depth = 0.2;
+snap_w = 1.2;
+snap_l = 2.5;
+module snap_pin()
+{
+   rabbit_clip(type="pin",length=snap_l, width=5,snap=snap_depth,thickness=0.8, depth=snap_w, compression=0.2,lock=false);
+}
+
+module snap_socket()
+{
+   // 2*e - tile already has 1*e oversize
+   ymove(-e*2) xrot(90) 
+      rabbit_clip(type="socket",length=snap_l, width=5,snap=snap_depth,thickness=0.8, depth=snap_w + 0.2, lock=false,compression=0);
+}
+
 
 module insert() 
 {
@@ -355,18 +362,47 @@ module insert()
 		tile(chamfer=false);
 		up(-e) zrot(45) thread(true);
 
-      if (!Human_Pin_Alt) {
-         // arc cut out
-         arc_w = 1.5;
-         arc_d = 22;
-         angle = 5;
-         linear_extrude(height = 10) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
-      }
-		
+		 arc_d = 23;
+		 start = 67.5;
+
+		zrot(start - 90) up(snap_l) back(arc_d/2) xrot(270) snap_socket();
 	}
 
 
 
+}
+
+      
+module pin()
+{
+	gap = 0.2;
+	arc_w0 = snap_w;
+	arc_w1 = 2.5;
+	arc_w2 = 4;
+	arc_d = 23;
+	angle = 20 + 1;
+	angle_support = 5;
+	start = 67.5;
+	pin_height = 1;
+	height = tile_height/2 + pin_height;
+
+	// through pin
+	//linear_extrude(height = height - e) stroke(arc(d=arc_d, angle=angle, start = start - angle/2), width=arc_w0 - gap*2, $fn=75);
+
+	// snap rips
+	//angle_snap = 1;
+	//linear_extrude(height = height - e) stroke(arc(d=arc_d, angle=angle_snap, start = start - angle_snap/2), width=arc_w0, endcaps="butt", $fn=75);
+	//linear_extrude(height = height - e) stroke(arc(d=arc_d, angle=angle_snap, start = start + angle/2 - angle_snap), width=arc_w0, endcaps="butt", $fn=75);
+	//linear_extrude(height = height - e) stroke(arc(d=arc_d, angle=angle_snap, start = start - angle/2), width=arc_w0, endcaps="butt", $fn=75);
+
+	up(lock_height) linear_extrude(height = height - lock_height + e) stroke(arc(d=arc_d, angle=angle, start = start - angle/2), width=arc_w1 - gap*2, $fn=75);
+	up(tile_height/2) linear_extrude(height = height - tile_height/2) stroke(arc(d=arc_d, angle=angle, start = start - angle/2), width=arc_w2 - gap*2, $fn=75);
+
+	zrot(start - 90) up(snap_l) back(arc_d/2) xrot(180) snap_pin();
+
+	// snap support
+	up(1) linear_extrude(height = height - 1) stroke(arc(d=arc_d, angle=angle_support, start = start - angle_support/2), width=arc_w0 - gap*2, $fn=75);
+	
 }
 
 module lock(manual_pin=false) 
@@ -392,27 +428,6 @@ module lock(manual_pin=false)
 
 				// Don't cut ring
 				cyl(h = 10, d = tile_size - 4);
-			}
-		}
-
-		if (manual_pin) {
-			if (Human_Pin_Alt) {
-				// pin to manually rotate the lock
-				angle = 5;
-				angle2 = 2;
-				recess = 0.5;
-				difference() {
-					up(lock_height - part_gap - recess/2 - e) linear_extrude(height = lid_height + part_gap - recess) stroke(arc(d=pin_arc_d, angle=angle, start = 45 + 22.5 - angle/2), width=pin_width, $fn=75);
-					up(tile_height/2 - 0.5 - recess) linear_extrude(height = 0.5) stroke(arc(d=pin_arc_d, angle=angle2, start = 45 + 22.5 - angle2/2), width=pin_width, endcap_length = 0, $fn=75);
-				}
-			}
-			else {
-				// pin to manually rotate the lock
-				arc_w = 1;
-				arc_d = 22;
-				angle = 5;
-				linear_extrude(height = tile_height/2+1) stroke(arc(d=arc_d, angle=angle, start = 22.5 - angle/2), width=arc_w, $fn=75);
-				linear_extrude(height = lock_height+e) stroke(arc(d=arc_d, angle=angle, start = 22.5 + angle/2), width=arc_w/2, $fn=75);
 			}
 		}
 	}
@@ -564,10 +579,11 @@ render() {
 				RotAngle = Draw_Locked ? 0 : -45;
 				if(lid) zrot(RotAngle) up(0) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
 				if(lock) lock(manual_pin=Human_Pin);
+				if(pin) pin();
 				/*if(lid && lock && print_in_place)*/ //supports();
 				if(stemfie) {
 					back(cell_height/2 - e) xrot(90) lid();
-					down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 3) zrot(90) beam_block(6);
+					down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 3) zrot(90) beam_block(5, holes=[true, false, true]);
 				}
 			}
 		}
@@ -575,6 +591,7 @@ render() {
 		if (cross_view) zrot(45) cuboid([50, 50, 10], anchor=BACK); 
 	}
 }
+
 
 
 
