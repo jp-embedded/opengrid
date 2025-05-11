@@ -154,10 +154,10 @@ module thread(int = false)
 	slope = 1; // same slope as cell grove
 
 	w = 1.0 + (int ? part_gap : -part_gap);
-	w_snap = part_gap + 0.1;
+	w_snap = part_gap + 0.2;
 	l_snap = 2;
 	h = 2;
-	pitch_a = 0.5;
+	pitch_a = 0.4;
 	pitch_b = 0.1;
 	cut_gap =  0.02; // cut out oversize in percent
 	starts = 4;
@@ -188,9 +188,7 @@ module thread(int = false)
 		//lead = int ? 0 : 1;
 		lead = 0;
 		union() {
-		//t = turns * 1.5; // add extra turn for snap
-		t = turns * (int ? 2 : 1); // add extra turn for snap
-            down(0.2) thread_helix(d=thread_d, pitch=pitch_a, turns=t, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int, $fn=128);
+            down(0.2) thread_helix(d=thread_d, pitch=pitch_a, turns=turns*2, starts=starts, profile=prof_a, lead_in=lead, left_handed=1, internal = int, $fn=128);
 
 			// add thread at top. Only cut off in bottom needed
          //if (!print_in_place) {
@@ -198,10 +196,14 @@ module thread(int = false)
          //}
 		}
 		cyl(h = 50, d = 50, anchor=TOP); // cut off bottom part
+
+		if (!int) {
+			zrot(360/(starts*2) + 360/(starts*2) * cut_gap/2) thread_helix(d=thread_d + 0.01, pitch=pitch_b, turns=turns * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int, $fn=128);
+		}
 	} 
  
 	// insert cut off
-	if (!print_in_place && int) {
+	if (int) {
 		zrot(360/(starts*2) + 360/(starts*2) * cut_gap/2) thread_helix(d=thread_d - w_snap*2, pitch=pitch_b, turns=turns * (1+cut_gap), starts=starts, profile=prof_b, left_handed=1, internal = int, $fn=128);
 	}
 }
@@ -570,11 +572,12 @@ render() {
 				pip();
 			}
 			else {
-				RotAngle = Draw_Locked ? 0 : -45;
+				RotAngle = Draw_Locked ? 0 : 45;
 				if(lid) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
 				zrot(RotAngle) {
-				if(lock) lock(manual_pin=Human_Pin);
-				if(pin) pin();}
+					if(lock) lock(manual_pin=Human_Pin);
+					if(pin) pin();
+				}
 				/*if(lid && lock && print_in_place)*/ //supports();
 				if(stemfie) {
 					back(cell_height/2 - e) xrot(90) lid();
