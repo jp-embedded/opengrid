@@ -3,6 +3,7 @@ lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
 part_gap = 0.2;
 part_gap_bottom = 0.2;
+directional = false;
 
 /* [For debugging] */
 
@@ -622,29 +623,44 @@ module side_snap()
 
 module lock4() 
 {
-   difference() {
+	difference() {
 
-      // insert
-      cuboid([tile_size, tile_size, tile_height/2+e], anchor=BOTTOM);
-      tile(grove = false);
+		// insert
+		cuboid([tile_size, tile_size, tile_height/2+e], anchor=BOTTOM);
+		tile(grove = false);
 
-      // cut bottom to make it printable
-      chamf = tile_height/2;
-      x = tile_size/2 - cell_wall_size + cell_chamfer - chamf;
-      right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
+		// cut bottom to make it printable
+		chamf = tile_height/2;
+		x = tile_size/2 - cell_wall_size + cell_chamfer - chamf;
+		right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
 
-      // cut top to make it symetrical
-      zrot(180) right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
+		if (!directional) {
+			// cut top to make it symetrical
+			zrot(180) right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
+		}
 
-      // cut for snap
-      down(0.5) {
-         zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
-         zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
-      }
-   }
-   //top_snap();
-   zrot(-90) side_snap();
-   zrot(90) side_snap();
+		// cut for snap
+		down(0.5) {
+			zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+			zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+		}
+
+		//top_snap();
+		zrot(-90) side_snap();
+		zrot(90) side_snap();
+
+		if (directional) {
+			// cut corners a bit for angled insert
+			c = adj_opp_to_hyp(4.2, 4.2) / 2 + 2.6;
+			cut_h = 0.5;
+			cut_a = 10;
+			up(cut_h) move([tile_size/2, tile_size/2, 0]) zrot(45) yrot(cut_a) cuboid([c*2, 100, tile_height], anchor=TOP);
+			zrot(-90) up(cut_h) move([tile_size/2, tile_size/2, 0]) zrot(45) yrot(cut_a) cuboid([c*2, 100, tile_height], anchor=TOP);
+		}
+	}
+	if (directional) {
+		top_snap();
+	}
 }
 
 module slide_lock()
@@ -669,8 +685,16 @@ module corner(h)
 
 }
 
+module stemfie()
+{
+	beam_holes = 5;
+	yrot(90) snap();
+	down(tile_size/2 - tile_edge_width - BU/2 + 0.4) right(BU * beam_holes/2 + tile_height/2 - 0.3) beam_block(beam_holes, holes=[true, false, true]);
+}
+
 render() {
-   corner(3);
+   //corner(3);
+   stemfie();
 }
 
 
