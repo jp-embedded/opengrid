@@ -3,7 +3,7 @@ lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
 part_gap = 0.2;
 part_gap_bottom = 0.2;
-directional = false;
+directional = true;
 
 /* [For debugging] */
 
@@ -627,9 +627,9 @@ module lock4()
 
 		// insert
 		cuboid([tile_size, tile_size, tile_height/2+e], anchor=BOTTOM);
-		tile(grove = false);
+		tile(grove = false, chamfer = false);
 
-		// cut bottom to make it printable
+		// cut bottom to make it printable/insertable
 		chamf = tile_height/2;
 		x = tile_size/2 - cell_wall_size + cell_chamfer - chamf;
 		right(x) cuboid([tile_size, tile_size, tile_height+e], chamfer = chamf, anchor=LEFT);
@@ -689,7 +689,7 @@ module stemfie()
 {
 	beam_holes = 5;
 	yrot(90) snap();
-	down(tile_size/2 - tile_edge_width - BU/2 + 0.4) right(BU * beam_holes/2 + tile_height/2 - 0.3) beam_block(beam_holes, holes=[true, false, true]);
+	down(tile_size/2 - tile_edge_width - BU/2) right(BU * beam_holes/2 + tile_height/2 - 0.3) beam_block(beam_holes, holes=[true, false, true]);
 }
 
 render() {
