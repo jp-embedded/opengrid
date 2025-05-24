@@ -4,3 +4,6 @@
 [submodule "Stemfie_OpenSCAD"]
 	path = Stemfie_OpenSCAD
 	url = https://github.com/Cantareus/Stemfie_OpenSCAD.git
+[submodule "gridfinity_extended_openscad"]
+	path = gridfinity_extended_openscad
+	url = https://github.com/ostat/gridfinity_extended_openscad.git

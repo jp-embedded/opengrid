@@ -1,11 +1,12 @@
 lock = true;
 lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
-part_gap = 0.1;
-part_gap_bottom = 0.1;
+stemfie = false;
 
 /* [For debugging] */
 
+part_gap = 0.1;
+part_gap_bottom = 0.1;
 tile = false;
 cross_view = false;
 Draw_Locked = false; // for rotated view
@@ -14,7 +15,6 @@ Draw_Locked = false; // for rotated view
 
 pin = lock;
 
-stemfie = false;
 Vertical_Printing = false; // for vertical printing
 Human_Pin = false; // for human pin
 Human_Pin_Alt = false; // Test for alternative human pin
@@ -45,7 +45,7 @@ tile_height = 6.8;
 tile_edge_width = 1.5;
 tile_chamfer = 0.4;
 
-lid_height = 1.4;
+lid_height = 1.0;
 lock_height = tile_height/2 - lid_height;
 thread_d = 18;
 
@@ -308,14 +308,18 @@ module lid(multiconnect=false, printing=false)
 			}
 
 			difference() { 
-				zrot(45) thread();
+				zrot(-22.5) thread();
 				if (printing || !print_in_place) {
 					// cut bottom of thread to make it printable standing
-					//fwd(thread_d/2 - 4) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
+					fwd(thread_d/2 - 2.5) up(lock_height) cuboid([50, 50, lock_height*2+e], chamfer=lock_height, anchor=TOP+BACK); 
 				}
 			}
 
 		}
+
+		// cut off bottom for gab between other lite insert. To ease lock/unlock
+		up(0.2) cuboid([50, 50, lock_height*2+e], anchor=TOP); 
+
 		if (multiconnect) {
 			multiconnect_thread();
 		}
@@ -355,7 +359,7 @@ module insert()
 
 		}
 		tile(chamfer=false);
-		up(-e) zrot(45) thread(true);
+		up(-e) zrot(-22.5) thread(true);
 
 		 arc_d = 22.5;
 		 start = 67.5;
@@ -403,29 +407,34 @@ module pin()
 
 module lock(manual_pin=false) 
 {
-	union() {
-		intersection() {
-			down(e) insert();
+	difference() {
+		union() {
+			intersection() {
+				down(e) insert();
 
-			up(0.3) union() {
-				// cylinder that fits inside tile
-				grove_cyl();
+				up(0.3) union() {
+					// cylinder that fits inside tile
+					grove_cyl();
 
-				// Corners so it can only rotate 45 deg
-				diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
-				rotate(90) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
-				rotate(180) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
-				rotate(270) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
-			}
+					// Corners so it can only rotate 45 deg
+					diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+					rotate(90) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+					rotate(180) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+					rotate(270) diff() cuboid([(tile_size-1.6)/2, (tile_size-1.6)/3, 4], anchor=LEFT+FRONT);
+				}
 
-			union() {
-				// Cut cornes so it can be inserted at 45 degree
-				rotate(45) cuboid([cell_size - 3, cell_size - 3, lock_height - part_gap], chamfer =  0.4, anchor=BOTTOM);
+				union() {
+					// Cut cornes so it can be inserted at 45 degree
+					rotate(45) cuboid([cell_size - 3, cell_size - 3, lock_height - part_gap], chamfer =  0.4, anchor=BOTTOM);
 
-				// Don't cut ring
-				cyl(h = 10, d = tile_size - 4);
+					// Don't cut ring
+					cyl(h = 10, d = tile_size - 4);
+				}
 			}
 		}
+
+		// cut off bottom for gab between other lite insert. To ease lock/unlock
+		up(0.2) cuboid([50, 50, lock_height*2+e], anchor=TOP); 
 	}
 }
 
@@ -572,16 +581,18 @@ render() {
 				pip();
 			}
 			else {
-				RotAngle = Draw_Locked ? 0 : 45;
-				if(lid) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
-				zrot(RotAngle) {
-					if(lock) lock(manual_pin=Human_Pin);
-					if(pin) pin();
-				}
-				/*if(lid && lock && print_in_place)*/ //supports();
 				if(stemfie) {
 					back(cell_height/2 - e) xrot(90) lid();
-					down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 3) zrot(90) beam_block(5, holes=[true, false, true]);
+					down(tile_size/2 - tile_edge_width - BU/2) fwd(BU * 2.5 - 0.3) zrot(90) beam_block(5, holes=[true, false, true]);
+				}
+				else {
+					RotAngle = Draw_Locked ? 0 : 45;
+					if(lid) lid(multiconnect=MultiConnect_Thread, printing=Vertical_Printing);
+					zrot(RotAngle) {
+						if(lock) lock(manual_pin=Human_Pin);
+						if(pin) pin();
+					}
+					/*if(lid && lock && print_in_place)*/ //supports();
 				}
 			}
 		}

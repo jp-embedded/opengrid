@@ -1,9 +1,15 @@
+include <gridfinity_extended_openscad/modules/gridfinity_constants.scad>
+use <gridfinity_extended_openscad/modules/module_gridfinity_baseplate.scad>
+
 lock = true;
 lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
 part_gap = 0.2;
 part_gap_bottom = 0.2;
 directional = true;
+stemfie = false;
+gridfinity = false;
+gridfinity_depth = 1;
 
 /* [For debugging] */
 
@@ -13,7 +19,6 @@ Draw_Locked = false; // for rotated view
 
 /* [Hidden] */
 
-stemfie = false;
 Vertical_Printing = false; // for vertical printing
 Human_Pin = false; // for human pin
 Human_Pin_Alt = false; // Test for alternative human pin
@@ -64,21 +69,26 @@ pin_width = 3;
 pin_arc_d = 20;
 
 
-module tile(grove = true, chamfer = true)
+module tile(grove = true, chamfer = true, gap = 0)
 {
     chamf = chamfer ? tile_chamfer : 0;
     difference() {
         // rect tube
         cuboid([tile_size+e, tile_size+e, tile_height]); 
-        cuboid([tile_size-tile_edge_width*2, tile_size-tile_edge_width*2, tile_height+e], chamfer = -chamf);
+        cuboid([tile_size-tile_edge_width*2 - gap*2, tile_size-tile_edge_width*2 - gap*2, tile_height+e], chamfer = -chamf);
 
         // grove
-        if (grove) diff() cuboid([tile_size-1.6, tile_size-1.6, 4]) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+        //if (grove) diff() cuboid([tile_size-1.6, tile_size-1.6, 4]) edge_profile() mask2d_chamfer(x = 0.7, y = 1);
+	// grove
+	grove_h = 2;
+	chamf_y = (tile_height - grove_h) / 2;
+	chamf_x = chamf_y * 0.7;
+        if(grove) diff() cuboid([tile_size-1.6, tile_size-1.6, tile_height]) edge_profile() mask2d_chamfer(x = chamf_x, y = chamf_y);
     }
 
     // corners
     intersection() {
-        c = adj_opp_to_hyp(4.2, 4.2) / 2 + 2.6;
+        c = adj_opp_to_hyp(4.2, 4.2) / 2 + 2.6 + gap;
         cuboid([tile_size+e, tile_size+e, tile_height]); 
         zrot_copies(n = 4) move([tile_size/2, tile_size/2, 0]) zrot(45) cuboid([c*2, 100, tile_height], chamfer = 1.4);
     }
@@ -604,19 +614,36 @@ module top_snap()
    difference() {
 
       // insert
-      left(tile_size/2) cuboid([2, tile_size, tile_height/2+e], anchor=BOTTOM+LEFT);
-      tile(grove = true);
+      left(tile_size/2) cuboid([3, tile_size, tile_height/2+e], anchor=BOTTOM+LEFT);
+      tile(grove = true, chamfer=false, gap = part_gap);
    }
 
 }
 
 module side_snap()
 {
-   snap_l = 5;
+   snap_l = 8;
    flatten = 0.4;
    difference() {
-      left(tile_size/2 - 1.5) diff() cuboid([1.4, snap_l, 2], anchor=BOTTOM) edge_profile(except=[FRONT+TOP,FRONT+BOTTOM,BACK+TOP,BACK+BOTTOM]) mask2d_chamfer(x = 0.7, y = 1);
-      left(tile_size/2 - 1.5 + 1.4 - flatten) cuboid([1.4, snap_l, 2], anchor=BOTTOM);
+	   // grove
+	   grove_h = 2;
+	   chamf_y = (tile_height - grove_h) / 2;
+	   chamf_x = chamf_y * 0.7;
+	   intersection() {
+		   diff() cuboid([tile_size-1.6, snap_l, tile_height]) edge_profile(except=[FRONT+TOP,FRONT+BOTTOM,BACK+TOP,BACK+BOTTOM]) mask2d_chamfer(x = chamf_x, y = chamf_y);
+
+		   // less steep on press-in
+		   b_grove_h = 0;
+		   b_chamf_y = (tile_height - b_grove_h) / 2;
+		   b_chamf_x = chamf_y * 0.7;
+		   up(1.85) diff() cuboid([tile_size-1.6, snap_l + 1, tile_height]) edge_profile(except=[FRONT+TOP,FRONT+BOTTOM,BACK+TOP,BACK+BOTTOM]) mask2d_chamfer(x = b_chamf_x, y = b_chamf_y);
+	   }
+
+	   // keep only grove
+	   left(tile_size/2 - 1.5 - part_gap - e) cuboid([50, 10, 10], anchor=LEFT);
+
+	   // flatten
+	   left(tile_size/2 - 0.8 - flatten) cuboid([10, 10, 10], anchor=RIGHT);
    }
 
 }
@@ -627,7 +654,7 @@ module lock4()
 
 		// insert
 		cuboid([tile_size, tile_size, tile_height/2+e], anchor=BOTTOM);
-		tile(grove = false, chamfer = false);
+		tile(grove = false, chamfer = false, gap = part_gap);
 
 		// cut bottom to make it printable/insertable
 		chamf = tile_height/2;
@@ -640,24 +667,29 @@ module lock4()
 		}
 
 		// cut for snap
-		down(0.5) {
-			zrot(-90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
-			zrot(90) right(tile_size/2 - 2.7) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
-		}
+		cut_recess = 0.8;
+		cut_indent = 3.5;
+		down(cut_recess) {
+			//slice back
+			zrot(-90) right(tile_size/2 - cut_indent) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
+			zrot(90) right(tile_size/2 - cut_indent) cuboid([0.5, 14, tile_height+e], anchor=LEFT);
 
-		//top_snap();
-		zrot(-90) side_snap();
-		zrot(90) side_snap();
+			// slice side
+			zrot(-90) up(tile_height/2) right(tile_size/2 - 3) cuboid([10, 14, 0.2], anchor=LEFT+TOP);
+			zrot(90) up(tile_height/2) right(tile_size/2 - 3) cuboid([10, 14, 0.2], anchor=LEFT+TOP);
+		}
 
 		if (directional) {
 			// cut corners a bit for angled insert
 			c = adj_opp_to_hyp(4.2, 4.2) / 2 + 2.6;
-			cut_h = 0.5;
+			cut_h = 1.3;
 			cut_a = 10;
 			up(cut_h) move([tile_size/2, tile_size/2, 0]) zrot(45) yrot(cut_a) cuboid([c*2, 100, tile_height], anchor=TOP);
 			zrot(-90) up(cut_h) move([tile_size/2, tile_size/2, 0]) zrot(45) yrot(cut_a) cuboid([c*2, 100, tile_height], anchor=TOP);
 		}
 	}
+	zrot(-90) side_snap();
+	zrot(90) side_snap();
 	if (directional) {
 		top_snap();
 	}
@@ -687,14 +719,65 @@ module corner(h)
 
 module stemfie()
 {
-	beam_holes = 5;
-	yrot(90) snap();
-	down(tile_size/2 - tile_edge_width - BU/2) right(BU * beam_holes/2 + tile_height/2 - 0.3) beam_block(beam_holes, holes=[true, false, true]);
+	up(tile_size/2 - tile_edge_width - part_gap) {
+		yrot(90) snap();
+	}
+	beam_holes = 4;
+	up(BU/2) right(BU * beam_holes/2 + tile_height/2 - 0.3) beam_block(beam_holes, holes=[false, false, true]);
+}
+
+module gridfinity()
+{
+	up(tile_size/2 - tile_edge_width - part_gap) {
+		yrot(90) snap();
+		fwd(28) yrot(90) snap();
+		back(28) yrot(90) snap();
+	}
+	right(tile_height/2) fwd(42) gridfinity_baseplate(
+			num_x = gridfinity_depth,
+			num_y = 2,
+			plate_corner_radius = 2,
+			magnetZOffset = 1
+			);
+	/*
+	   outer_num_x = plate[1].x[iPlate_outerSize], //calcDimensionWidth(outer_Width),
+	   outer_num_y = plate[1].y[iPlate_outerSize], //calcDimensionWidth(outer_Depth),
+	   outer_height = outer_Height,
+	   position_fill_grid_x = plate[1].x[iPlate_posGrid], //position_fill_grid_x,
+	   position_fill_grid_y = plate[1].y[iPlate_posGrid], //position_fill_grid_y,
+	   position_grid_in_outer_x = plate[1].x[iPlate_posOuter], //position_grid_in_outer_x,
+	   position_grid_in_outer_y = plate[1].y[iPlate_posOuter], //position_grid_in_outer_y,
+	   plate_corner_radius = plate_corner_radius,
+	   magnetSize = Enable_Magnets ? Magnet_Size : [0,0],
+	   magnetZOffset = Magnet_Z_Offset,
+	   magnetTopCover=Magnet_Top_Cover,
+	   reducedWallHeight = Reduced_Wall_Height, 
+	   reduceWallTaper = Reduced_Wall_Taper, 
+	   cornerScrewEnabled  = Corner_Screw_Enabled,
+	   centerScrewEnabled = Center_Screw_Enabled,
+	   weightedEnable = Enable_Weight,
+	   oversizeMethod=oversize_method,
+	   plateOptions = Base_Plate_Options,
+	   customGridEnabled = Custom_Grid_Enabled,
+	   gridPositions=[xpos1,xpos2,xpos3,xpos4,xpos5,xpos6,xpos7],
+	   connectorPosition = Connector_Position,
+	   connectorClipEnabled  = Connector_Clip_Enabled,
+	   connectorClipSize = Connector_Clip_Size,
+	   connectorClipTolerance = Connector_Clip_Tolerance,
+	   connectorButterflyEnabled  = Connector_Butterfly_Enabled,
+	   connectorButterflySize = Connector_Butterfly_Size,
+	   connectorButterflyRadius = Connector_Butterfly_Radius,
+	   connectorButterflyTolerance = Connector_Butterfly_Tolerance,
+	   connectorFilamentEnabled=Connector_Filament_Enabled,
+	   connectorFilamentDiameter=Connector_Filament_Diameter,
+	   connectorFilamentLength=Connector_Filament_Length);
+	 */
 }
 
 render() {
    //corner(3);
-   stemfie();
+   if(stemfie) stemfie();
+   if (gridfinity) fwd(2*28) gridfinity();
 }
 
 
