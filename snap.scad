@@ -10,6 +10,8 @@ directional = true;
 stemfie = false;
 gridfinity = false;
 gridfinity_depth = 1;
+gridfinity_bottom = false;
+gridfinity_magnets = false;
 
 /* [For debugging] */
 
@@ -733,12 +735,23 @@ module gridfinity()
 		fwd(28) yrot(90) snap();
 		back(28) yrot(90) snap();
 	}
-	right(tile_height/2) fwd(42) gridfinity_baseplate(
+	right(tile_height/2) {
+		if (gridfinity_magnets) fwd(42) gridfinity_baseplate(
 			num_x = gridfinity_depth,
 			num_y = 2,
 			plate_corner_radius = 2,
+			//magnetSize = [0,2.5],
 			magnetZOffset = 1
 			);
+		else fwd(42) gridfinity_baseplate(
+			num_x = gridfinity_depth,
+			num_y = 2,
+			plate_corner_radius = 2,
+			magnetSize = [0,2.4],
+			magnetZOffset = 1
+			);
+		if (gridfinity_bottom) cuboid([gridfinity_depth * 42, 2 * 42, 3.4], anchor=BOTTOM+LEFT, chamfer=2, except=[TOP, BOTTOM]); 
+	}
 	/*
 	   outer_num_x = plate[1].x[iPlate_outerSize], //calcDimensionWidth(outer_Width),
 	   outer_num_y = plate[1].y[iPlate_outerSize], //calcDimensionWidth(outer_Depth),
