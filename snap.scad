@@ -6,12 +6,12 @@ lid = true;
 MultiConnect_Thread = false; // for multiconnect thread
 part_gap = 0.2;
 part_gap_bottom = 0.2;
-directional = true;
 stemfie = false;
 gridfinity = false;
 gridfinity_depth = 1;
 gridfinity_bottom = false;
 gridfinity_magnets = false;
+corner = false;
 
 /* [For debugging] */
 
@@ -650,7 +650,7 @@ module side_snap()
 
 }
 
-module lock4() 
+module lock4(directional = true) 
 {
 	difference() {
 
@@ -702,9 +702,9 @@ module slide_lock()
    lock3();
 }
 
-module snap()
+module snap(directional = true)
 {
-   lock4();
+   lock4(directional);
 }
 
 module corner(h)
@@ -712,10 +712,18 @@ module corner(h)
    //corner_chamfer = 0.4;
    corner_chamfer = 1;
 
-   cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT); // wall
-   zrot(90) cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT); // wall
+   // walls
+   cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
+   zrot(90) cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
    cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]); // corner
-   back(tile_size) yrot(90) snap();
+
+   // snaps
+   back(tile_size) yrot(90) xcopies(28, h) front_half() snap(directional = false);
+   right(tile_size) zrot(90) yrot(90) xcopies(28, h) back_half() snap(directional = false);
+
+   // inner wall
+   back(tile_height/2) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+BACK, anchor=LEFT+FRONT);
+   right(tile_height/2) zrot(90) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+FRONT, anchor=LEFT+BACK);
 
 }
 
@@ -788,9 +796,9 @@ module gridfinity()
 }
 
 render() {
-   //corner(3);
    if(stemfie) stemfie();
    if (gridfinity) fwd(2*28) gridfinity();
+   if (corner) corner(3);
 }
 
 
