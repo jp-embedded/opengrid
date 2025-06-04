@@ -709,21 +709,23 @@ module snap(directional = true)
 
 module corner(h)
 {
-   //corner_chamfer = 0.4;
-   corner_chamfer = 1;
+   up(h*14) {
+      //corner_chamfer = 0.4;
+      corner_chamfer = 1;
 
-   // walls
-   cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
-   zrot(90) cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
-   cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]); // corner
+      // walls
+      cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
+      zrot(90) cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
+      cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]); // corner
 
-   // snaps
-   back(tile_size) yrot(90) xcopies(28, h) front_half() snap(directional = false);
-   right(tile_size) zrot(90) yrot(90) xcopies(28, h) back_half() snap(directional = false);
+      // snaps
+      back(tile_size) yrot(90) xcopies(28, h) front_half() snap(directional = false);
+      right(tile_size) zrot(90) yrot(90) xcopies(28, h) back_half() snap(directional = false);
 
-   // inner wall
-   back(tile_height/2) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+BACK, anchor=LEFT+FRONT);
-   right(tile_height/2) zrot(90) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+FRONT, anchor=LEFT+BACK);
+      // inner wall
+      back(tile_height/2) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+BACK, anchor=LEFT+FRONT);
+      right(tile_height/2) zrot(90) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+FRONT, anchor=LEFT+BACK);
+   }
 
 }
 
@@ -809,10 +811,10 @@ module drawer()
 
 render() {
    //if (gridfinity) fwd(2*28) gridfinity();
-   //if (corner) corner(3);
    rail3();
    left(30) rail2();
    left(60) drawer();
+   left(120) corner(3);
    //cubetruss(extends=3, bracing=false, size=28);
 }
 
