@@ -729,6 +729,21 @@ module corner(h)
 
 }
 
+module corner_b(h)
+{
+      corner_chamfer = 0.4;
+
+	up(h*14) {
+		// grid
+		zcopies(28, h) xrot(90) left_half() tile();
+		zrot(90) zcopies(28, h) xrot(90) left_half() tile();
+
+		// corner
+	      	cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]);
+	}
+}
+
+
 module gridfinity()
 {
 	up(tile_size/2 - tile_edge_width - part_gap) {
@@ -811,10 +826,12 @@ module drawer()
 
 render() {
    //if (gridfinity) fwd(2*28) gridfinity();
+
    rail3();
    left(30) rail2();
    left(60) drawer();
-   //left(120) corner(3);
+   left(120) corner_b(3);
+
    //cubetruss(extends=3, bracing=false, size=28);
 }
 
