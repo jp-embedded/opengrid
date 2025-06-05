@@ -790,21 +790,21 @@ module gridfinity()
 
 module rail3()
 {
-   up(5) xcopies(7, 4) slider(w = 5, h = 5, chamfer = 0, base=0, wall = 1, spin=90, orient=DOWN);
-   up(tile_height/2 + 5) xrot(180) snap();
+   xcopies(7, 4) slider(w = 5, h = 5, chamfer = 0, base=tile_height/2 + 1, wall = 1, spin=90, $slop=0.2);
+   snap();
 }
 
 module rail2()
 {
-   up(5) xcopies(7, 2) rail(w = 5, h = 5, orient=DOWN);
-   up(5) /*right_half()*/ slider(w = 5, h = 5, chamfer = 0, base=tile_height/2, wall = 4, spin=90);
+   up(5) xcopies(7, 2) rail(w = 5, h = 5, orient=DOWN, chamfer=0.5);
+   up(5) /*right_half()*/ slider(w = 5, h = 5, chamfer = 0, base=tile_height/2, wall = 4, spin=90, $slop=0.2);
 }
 
 module drawer()
 {
    intersection() {
       cuboid([100,100,4], anchor=BOTTOM);
-      up(1.2) yrot(90) rail(w = 5, h = 5);
+      up(1.4) yrot(90) rail(w = 5, h = 5, chamfer=0.5);
    }
    cuboid([30, 30, 7], anchor=BOTTOM+RIGHT);
 }
@@ -814,7 +814,7 @@ render() {
    rail3();
    left(30) rail2();
    left(60) drawer();
-   left(120) corner(3);
+   //left(120) corner(3);
    //cubetruss(extends=3, bracing=false, size=28);
 }
 
