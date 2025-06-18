@@ -5,11 +5,11 @@ include <BOSL2/joiners.scad>
 grid_size_x = 3;
 grid_size_y = 2;
 
-edge_left = true;
+edge_left = false;
 edge_right = false;
-edge_top = true;
+edge_top = false;
 edge_bottom = false;
-snaps = true;
+snaps = "clip"; // [ "none", "clip", "rabbit"]
 
 
 /* [Hidden] */
@@ -43,21 +43,25 @@ module tile()
 // Snaps
 snap_depth = 0.3;
 
-module pin()
-{
-   rabbit_clip(type="pin",length=4, width=5,snap=snap_depth,thickness=0.8, depth=2, compression=0.3,lock=false);
-}
-
 module pin_double()
 {
-   rabbit_clip(type="double",length=4, width=5,snap=snap_depth,thickness=0.8, depth=2, compression=0.3,lock=false);
+   if (snaps == "rabbit") {
+      rabbit_clip(type="double",length=4, width=5,snap=snap_depth,thickness=0.8, depth=2, compression=0.3,lock=false);
+   }
+   if (snaps == "clip") {
+      snap_pin(size="medium", l=6.5, pointed=false);
+   }
 }
 
 module socket()
 {
-   // 2*e - tile already has 1*e oversize
-   ymove(-e*2) xrot(90) 
-      rabbit_clip(type="socket",length=4, width=5,snap=snap_depth,thickness=0.8, depth=2.4, lock=false,compression=0);
+   if (snaps == "rabbit") {
+      // 2*e - tile already has 1*e oversize
+      ymove(-e*2) xrot(90) rabbit_clip(type="socket",length=4, width=5,snap=snap_depth,thickness=0.8, depth=2.4, lock=false,compression=0);
+   }
+   if (snaps == "clip") {
+      xrot(90) snap_pin_socket(size="medium", l=6.5, pointed=false);
+   }
 }
 
 
@@ -75,12 +79,12 @@ module grid(x, y)
 
    // Snaps
    if (snaps) {
-      edge_dist = 7;
+      edge_dist = 5;
       zmove(-tile_height/2) {
-         if (!edge_bottom) ymove(-y*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = x) pin_double();
-         if (!edge_top) zrot(180) ymove(-y*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = x) pin_double();
-         if (!edge_right) zrot(90) ymove(-x*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = y) pin_double();
-         if (!edge_left) zrot(270) ymove(-x*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = y) pin_double();
+         if (!edge_bottom) ymove(-y*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = x) zrot(90) pin_double();
+         if (!edge_top) zrot(180) ymove(-y*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = x) zrot(90) pin_double();
+         if (!edge_right) zrot(90) ymove(-x*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = y) zrot(90) pin_double();
+         if (!edge_left) zrot(270) ymove(-x*tile_size/2 + edge_dist) xcopies(spacing = tile_size, n = y) zrot(90) pin_double();
       }
    }
 }
