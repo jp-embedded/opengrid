@@ -1,6 +1,7 @@
 include<BOSL2/std.scad>;
 include<BOSL2/math.scad>;
 include <BOSL2/joiners.scad>
+include <BOSL2/cubetruss.scad>
 
 grid_size_x = 3;
 grid_size_y = 2;
@@ -76,7 +77,10 @@ module grid(x, y)
       if (!edge_right) zrot(90) ymove(-x*tile_size/2) xcopies(spacing = tile_size, n = y-1) socket();
       if (!edge_left) zrot(270) ymove(-x*tile_size/2) xcopies(spacing = tile_size, n = y-1) socket();
    }
+}
 
+module snaps(x, y)
+{
    // Snaps
    if (snaps) {
       edge_dist = 5;
@@ -89,10 +93,6 @@ module grid(x, y)
    }
 }
 
-// Grid
-grid(grid_size_x, grid_size_y);
-
-
 module edge(size)
 {
    cuboid([size * tile_size, tile_edge_width, tile_height], chamfer = tile_chamfer, edges = FRONT, except = [LEFT, RIGHT], anchor=BACK);
@@ -103,16 +103,70 @@ module corner()
    cuboid([tile_edge_width + e, tile_edge_width + e, tile_height], chamfer = tile_chamfer, edges = [FRONT,LEFT], except = [RIGHT,BACK], anchor=BACK+RIGHT);
 }
 
+support_w = 1.4;
 
-// Edges
-if (edge_bottom) translate([0, -grid_size_y * tile_size/2, 0]) edge(grid_size_x);
-if (edge_top) rotate(180) translate([0, -grid_size_y * tile_size/2, 0]) edge(grid_size_x);
-if (edge_right) rotate(90) translate([0, -grid_size_x * tile_size/2, 0]) edge(grid_size_y);
-if (edge_left) rotate(270) translate([0, -grid_size_x * tile_size/2, 0]) edge(grid_size_y);
+module grid_corner_straight(y)
+{
+	corner_chamfer = 0.4;
+	xrot(90) yrot_copies([0, 90]) left_half() grid(1, y);
+	fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size*y], anchor=RIGHT+FRONT);
+	left(tile_height/2) cuboid([1.4, tile_size/2, tile_size*y], anchor=LEFT+BACK);
+	cuboid([tile_height, tile_height, tile_size*y], chamfer = corner_chamfer, except=[TOP,BOTTOM]);
+}
 
-// Corners
-if (edge_left && edge_bottom) translate([-grid_size_x * tile_size/2, -grid_size_y * tile_size/2, 0]) corner();
-if (edge_top && edge_right) rotate(180) translate([-grid_size_x * tile_size/2, -grid_size_y * tile_size/2, 0]) corner();
-if (edge_right && edge_bottom) rotate(90) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
-if (edge_left && edge_top) rotate(270) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
+module grid_corner(y, bottom)
+{
+	corner_chamfer = 0.4;
+	difference() {
+		grid_corner_straight(y);
+		up(tile_size*y/2) zrot(-45) xrot(-90) socket();
+		if (!bottom) {
+			down(tile_size*y/2) zrot(-45) xrot(90) socket();
+		}
+	}
+
+	if (bottom) {
+		down(y*tile_size/2 + tile_size/2) {
+			difference() {
+				union() {
+					front_half() left_half() tile(); // bottom
+					xrot(90) yrot_copies([0, 90]) back_half() left_half() tile();
+					left(tile_height/2) cuboid([support_w, tile_size/2, tile_size/2], anchor=LEFT+BOTTOM+BACK);
+					fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size/2], anchor=RIGHT+BOTTOM+FRONT);
+					down(tile_height/2) cuboid([tile_height, tile_height, tile_size], chamfer = corner_chamfer, except=[TOP], anchor=BOTTOM);
+					zrot_copies([0, 90]) cuboid([tile_size/2, tile_height, tile_height], chamfer = corner_chamfer, except=[LEFT], anchor=RIGHT);
+				}
+				left(tile_size/2) xrot(45) zrot(-90) socket();
+				zrot(90) left(tile_size/2) xrot(-45) zrot(-90) socket();
+			}
+		}
+
+	}
+	//yrot(90) cubetruss_support(size=tile_size/2, extents = [2,1,1], anchor=TOP+BACK);
+	//yrot(90) cubetruss(size=tile_size/2, extents = 3, bracing=false);
+}
+
+
+render() {
+/*
+	// Grid
+	grid(grid_size_x, grid_size_y);
+	snaps(grid_size_x, grid_size_y);
+
+	// Edges
+	if (edge_bottom) translate([0, -grid_size_y * tile_size/2, 0]) edge(grid_size_x);
+	if (edge_top) rotate(180) translate([0, -grid_size_y * tile_size/2, 0]) edge(grid_size_x);
+	if (edge_right) rotate(90) translate([0, -grid_size_x * tile_size/2, 0]) edge(grid_size_y);
+	if (edge_left) rotate(270) translate([0, -grid_size_x * tile_size/2, 0]) edge(grid_size_y);
+
+	// Corners
+	if (edge_left && edge_bottom) translate([-grid_size_x * tile_size/2, -grid_size_y * tile_size/2, 0]) corner();
+	if (edge_top && edge_right) rotate(180) translate([-grid_size_x * tile_size/2, -grid_size_y * tile_size/2, 0]) corner();
+	if (edge_right && edge_bottom) rotate(90) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
+	if (edge_left && edge_top) rotate(270) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
+	*/
+
+	// Corner
+	grid_corner(grid_size_y, true);
+}
 
