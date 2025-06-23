@@ -98,6 +98,11 @@ module edge(size)
    cuboid([size * tile_size, tile_edge_width, tile_height], chamfer = tile_chamfer, edges = FRONT, except = [LEFT, RIGHT], anchor=BACK);
 }
 
+module edge_corner(size)
+{
+   cuboid([tile_height, tile_edge_width, tile_height], chamfer = tile_chamfer, except = BACK, anchor=BACK);
+}
+
 module corner()
 {
    cuboid([tile_edge_width + e, tile_edge_width + e, tile_height], chamfer = tile_chamfer, edges = [FRONT,LEFT], except = [RIGHT,BACK], anchor=BACK+RIGHT);
@@ -114,18 +119,16 @@ module grid_corner_straight(y)
 	cuboid([tile_height, tile_height, tile_size*y], chamfer = corner_chamfer, except=[TOP,BOTTOM]);
 }
 
-module grid_corner(y, bottom)
+module grid_corner(y, bottom_corner, top_edge)
 {
 	corner_chamfer = 0.4;
 	difference() {
 		grid_corner_straight(y);
-		up(tile_size*y/2) zrot(-45) xrot(-90) socket();
-		if (!bottom) {
-			down(tile_size*y/2) zrot(-45) xrot(90) socket();
-		}
+		if (!top_edge) up(tile_size*y/2) zrot(-45) xrot(-90) socket();
+		if (!bottom_corner) down(tile_size*y/2) zrot(-45) xrot(90) socket();
 	}
 
-	if (bottom) {
+	if (bottom_corner) {
 		down(y*tile_size/2 + tile_size/2) {
 			difference() {
 				union() {
@@ -142,8 +145,9 @@ module grid_corner(y, bottom)
 		}
 
 	}
-	//yrot(90) cubetruss_support(size=tile_size/2, extents = [2,1,1], anchor=TOP+BACK);
-	//yrot(90) cubetruss(size=tile_size/2, extents = 3, bracing=false);
+
+   zrot_copies([0, 90]) xmove(-tile_size/4) up(y*tile_size/2) xrot(-90) edge(0.5);
+   up(y*tile_size/2) xrot(-90) edge_corner();
 }
 
 
@@ -167,6 +171,6 @@ render() {
 	*/
 
 	// Corner
-	grid_corner(grid_size_y, true);
+	grid_corner(grid_size_y, true, true);
 }
 
