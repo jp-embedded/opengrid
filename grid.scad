@@ -187,12 +187,17 @@ module grid_t(y, bottom_corner, top_edge)
    }
 }
 
+module edge_corner_a(size)
+{
+   fwd(tile_size/2) back_half() grid(size, 1);
+}
 
 render() {
-/*
 	// Grid
 	grid(grid_size_x, grid_size_y);
 	snaps(grid_size_x, grid_size_y);
+
+	if (true) translate([0, -grid_size_y * tile_size/2, 0]) edge_corner_a(grid_size_x);
 
 	// Edges
 	if (edge_bottom) translate([0, -grid_size_y * tile_size/2, 0]) edge(grid_size_x);
@@ -205,11 +210,10 @@ render() {
 	if (edge_top && edge_right) rotate(180) translate([-grid_size_x * tile_size/2, -grid_size_y * tile_size/2, 0]) corner();
 	if (edge_right && edge_bottom) rotate(90) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
 	if (edge_left && edge_top) rotate(270) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
-	*/
 
 	// Corner
 	//grid_corner(grid_size_y, true, true);
-	grid_t(grid_size_y, true, true);
+	//grid_t(grid_size_y, true, true);
          //zrot_copies([0,90]) xmove(14) xrot(90) grid(1, 2);
 }
 
