@@ -110,20 +110,31 @@ module corner()
 
 support_w = 1.4;
 
-module grid_corner_straight(y)
+module grid_corner_straight(y, support_inside)
 {
 	corner_chamfer = 0.4;
 	xrot(90) yrot_copies([0, 90]) left_half() grid(1, y);
-	fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size*y], anchor=RIGHT+FRONT);
-	left(tile_height/2) cuboid([1.4, tile_size/2, tile_size*y], anchor=LEFT+BACK);
-	cuboid([tile_height, tile_height, tile_size*y], chamfer = corner_chamfer, except=[TOP,BOTTOM]);
+	if (support_inside) {
+		fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size*y], anchor=RIGHT+FRONT);
+		left(tile_height/2) cuboid([support_w, tile_size/2, tile_size*y], anchor=LEFT+BACK);
+	}
+	else {
+		back(tile_height/2) cuboid([tile_size/2, support_w, tile_size*y], anchor=RIGHT+BACK);
+		right(tile_height/2) cuboid([support_w, tile_size/2, tile_size*y], anchor=RIGHT+BACK);
+	}
+	intersection() {
+		cuboid([tile_height, tile_height, tile_size*y], chamfer = corner_chamfer, except=[TOP,BOTTOM]);
+		cuboid([tile_height, tile_height, tile_size*y], chamfer = 3, except=[TOP,BOTTOM,FRONT,LEFT]);
+	}
 }
 
 module grid_corner(y, bottom_corner, top_edge)
 {
+	support_inside = false;
+
 	corner_chamfer = 0.4;
 	difference() {
-		grid_corner_straight(y);
+		grid_corner_straight(y, support_inside);
 		if (!top_edge) up(tile_size*y/2) zrot(-45) xrot(-90) socket();
 		if (!bottom_corner) down(tile_size*y/2) zrot(-45) xrot(90) socket();
 	}
@@ -134,8 +145,10 @@ module grid_corner(y, bottom_corner, top_edge)
 				union() {
 					front_half() left_half() tile(); // bottom
 					xrot(90) yrot_copies([0, 90]) back_half() left_half() tile();
-					left(tile_height/2) cuboid([support_w, tile_size/2, tile_size/2], anchor=LEFT+BOTTOM+BACK);
-					fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size/2], anchor=RIGHT+BOTTOM+FRONT);
+					if (support_inside) {
+						left(tile_height/2) cuboid([support_w, tile_size/2, tile_size/2], anchor=LEFT+BOTTOM+BACK);
+						fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size/2], anchor=RIGHT+BOTTOM+FRONT);
+					}
 					down(tile_height/2) cuboid([tile_height, tile_height, tile_size], chamfer = corner_chamfer, except=[TOP], anchor=BOTTOM);
 					zrot_copies([0, 90]) cuboid([tile_size/2, tile_height, tile_height], chamfer = corner_chamfer, except=[LEFT], anchor=RIGHT);
 				}
@@ -194,6 +207,7 @@ module edge_corner_a(size)
 
 render() {
 	// Grid
+	/*
 	grid(grid_size_x, grid_size_y);
 	snaps(grid_size_x, grid_size_y);
 
@@ -210,10 +224,17 @@ render() {
 	if (edge_top && edge_right) rotate(180) translate([-grid_size_x * tile_size/2, -grid_size_y * tile_size/2, 0]) corner();
 	if (edge_right && edge_bottom) rotate(90) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
 	if (edge_left && edge_top) rotate(270) translate([-grid_size_y * tile_size/2, -grid_size_x * tile_size/2, 0]) corner();
+	*/
 
 	// Corner
-	//grid_corner(grid_size_y, true, true);
+	yrot(45+90) xrot(90) grid_corner(grid_size_y, false, false);
 	//grid_t(grid_size_y, true, true);
          //zrot_copies([0,90]) xmove(14) xrot(90) grid(1, 2);
+
+//left(3) fwd(10) xrot(90) half_joiner(w = 5, l = tile_height, base=15);
+//right(3) fwd(10) xrot(90) half_joiner2(w = 5, l = tile_height, base=15);
+
+
+
 }
 
