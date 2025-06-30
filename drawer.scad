@@ -7,6 +7,8 @@ include <BOSL2/joiners.scad>
 include <BOSL2/sliders.scad>
 include <BOSL2/cubetruss.scad>
 
+length = 3;
+
 /* [Hidden] */
 
 lock = true;
@@ -18,8 +20,6 @@ gridfinity = false;
 gridfinity_depth = 1;
 gridfinity_bottom = false;
 gridfinity_magnets = false;
-
-/* [For debugging] */
 
 tile = false;
 cross_view = false;
@@ -707,43 +707,6 @@ module snap(directional = true)
    lock4(directional);
 }
 
-module corner(h)
-{
-   up(h*14) {
-      //corner_chamfer = 0.4;
-      corner_chamfer = 1;
-
-      // walls
-      cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
-      zrot(90) cuboid([tile_size/2, tile_height, tile_size*h], anchor=LEFT);
-      cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]); // corner
-
-      // snaps
-      back(tile_size) yrot(90) xcopies(28, h) front_half() snap(directional = false);
-      right(tile_size) zrot(90) yrot(90) xcopies(28, h) back_half() snap(directional = false);
-
-      // inner wall
-      back(tile_height/2) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+BACK, anchor=LEFT+FRONT);
-      right(tile_height/2) zrot(90) cuboid([tile_size, 2.5, tile_size*h], chamfer=1, edges=RIGHT+FRONT, anchor=LEFT+BACK);
-   }
-
-}
-
-module corner_b(h)
-{
-      corner_chamfer = 0.4;
-
-	up(h*14) {
-		// grid
-		zcopies(28, h) xrot(90) left_half() tile();
-		zrot(90) zcopies(28, h) xrot(90) left_half() tile();
-
-		// corner
-	      	cuboid([tile_height, tile_height, tile_size*h], chamfer = corner_chamfer, except=[TOP,BOTTOM]);
-	}
-}
-
-
 module gridfinity()
 {
 	up(tile_size/2 - tile_edge_width - part_gap) {
@@ -803,34 +766,41 @@ module gridfinity()
 	 */
 }
 
-module rail3()
+side_space_total = tile_size/2 - tile_height/2;
+drawer_wall_width = 2;
+rail_width = 3;
+
+echo("side space total          : ", side_space_total);
+echo("space outer rail to drawer: ", side_space_total - drawer_wall_width - rail_width);
+
+module rail3(length)
 {
-   xcopies(7, 4) slider(w = 5, h = 5, chamfer = 0, base=tile_height/2 + 1, wall = 1, spin=90, $slop=0.2);
+   xcopies(7, 4) slider(l=length*tile_size, w = 5, h = rail_width, chamfer = 0, base=tile_height/2 + 1, wall = 1, spin=90, $slop=0.2);
    snap();
 }
 
-module rail2()
+module rail2(length)
 {
-   up(5) xcopies(7, 2) rail(w = 5, h = 5, orient=DOWN, chamfer=0.5);
-   up(5) /*right_half()*/ slider(w = 5, h = 5, chamfer = 0, base=tile_height/2, wall = 4, spin=90, $slop=0.2);
+   up(5) xcopies(7, 2) rail(l=length*tile_size, w = 5, h = rail_width, orient=DOWN, chamfer=0.5);
+   up(5) /*right_half()*/ slider(l=length*tile_size, w = 5, h = rail_width, chamfer = 0, base=tile_height/2, wall = 4, spin=90, $slop=0.2);
 }
 
-module drawer()
+module drawer(length)
 {
    intersection() {
       cuboid([100,100,4], anchor=BOTTOM);
-      up(1.4) yrot(90) rail(w = 5, h = 5, chamfer=0.5);
+      up(1.4) yrot(90) rail(l=length*tile_size, w = 5, h = 5, chamfer=0.5);
    }
-   cuboid([30, 30, 7], anchor=BOTTOM+RIGHT);
+   cuboid([30, 30, 7], anchor=BOTTOM+RIGHT); // gridfinity base simulator
+   cuboid([drawer_wall_width, 30, 14], anchor=BOTTOM+RIGHT); // 2u minimum height
 }
 
 render() {
    //if (gridfinity) fwd(2*28) gridfinity();
 
-   rail3();
-   left(30) rail2();
-   left(60) drawer();
-   left(120) corner_b(3);
+   rail3(length);
+   left(30) rail2(length);
+   left(60) drawer(length);
 
    //cubetruss(extends=3, bracing=false, size=28);
 }
