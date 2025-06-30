@@ -128,41 +128,56 @@ module grid_corner_straight(y, support_inside)
 	}
 }
 
-module grid_corner(y, bottom_corner, top_edge)
-{
-	support_inside = false;
+corner_chamfer = 0.4;
+support_inside = false;
 
-	corner_chamfer = 0.4;
+module grid_corner_corner(y)
+{
+   down(y*tile_size/2 + tile_size/2) {
+      difference() {
+         union() {
+            top_half() grid_corner_straight(1, support_inside);
+            left(tile_size/2) xrot(45) zrot(-90) socket();
+
+            // bottom
+            front_half() left_half() tile();
+            intersection() {
+               zrot_copies([0, 90]) cuboid([50, tile_height, tile_height], chamfer = corner_chamfer, except=[LEFT]);
+               back(tile_height/2) right(tile_height/2) cuboid([tile_size/2+tile_height/2, tile_size/2+tile_height/2, tile_height], chamfer = 3, except=[TOP,FRONT,LEFT], anchor=RIGHT+BACK);
+            }
+            down(tile_height/2) cuboid([tile_size/2, tile_size/2, support_w], anchor=RIGHT+BACK+BOTTOM);
+         }
+
+         left(tile_size/2) xrot(45) zrot(-90) socket();
+         zrot(90) left(tile_size/2) xrot(-45) zrot(-90) socket();
+      }
+   }
+}
+
+module grid_corner_edge(y)
+{
+   zrot_copies([0, 90]) xmove(-tile_size/4) up(y*tile_size/2) xrot(-90) edge(0.5);
+   intersection() {
+      up(y*tile_size/2) xrot(-90) edge_corner();
+      // todo: calculate the fwd correctly
+      up(y*tile_size/2) zrot(-45) fwd(3/4 - 0.04) xrot(-90) edge(1);
+   }
+}
+
+module grid_corner(y, end_a, end_b)
+{
+
 	difference() {
 		grid_corner_straight(y, support_inside);
-		if (!top_edge) up(tile_size*y/2) zrot(-45) xrot(-90) socket();
-		if (!bottom_corner) down(tile_size*y/2) zrot(-45) xrot(90) socket();
+		if (end_b == "none") up(tile_size*y/2) zrot(-45) xrot(-90) socket();
+		if (end_a == "none") down(tile_size*y/2) zrot(-45) xrot(90) socket();
 	}
 
-	if (bottom_corner) {
-		down(y*tile_size/2 + tile_size/2) {
-			difference() {
-				union() {
-					front_half() left_half() tile(); // bottom
-					xrot(90) yrot_copies([0, 90]) back_half() left_half() tile();
-					if (support_inside) {
-						left(tile_height/2) cuboid([support_w, tile_size/2, tile_size/2], anchor=LEFT+BOTTOM+BACK);
-						fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size/2], anchor=RIGHT+BOTTOM+FRONT);
-					}
-					down(tile_height/2) cuboid([tile_height, tile_height, tile_size], chamfer = corner_chamfer, except=[TOP], anchor=BOTTOM);
-					zrot_copies([0, 90]) cuboid([tile_size/2, tile_height, tile_height], chamfer = corner_chamfer, except=[LEFT], anchor=RIGHT);
-				}
-				left(tile_size/2) xrot(45) zrot(-90) socket();
-				zrot(90) left(tile_size/2) xrot(-45) zrot(-90) socket();
-			}
-		}
+	if (end_a == "corner") grid_corner_corner(y);
+	if (end_b == "corner") zrot(90) xrot(180) grid_corner_corner(y);
 
-	}
-
-   if (top_edge) {
-      zrot_copies([0, 90]) xmove(-tile_size/4) up(y*tile_size/2) xrot(-90) edge(0.5);
-      up(y*tile_size/2) xrot(-90) edge_corner();
-   }
+   if (end_a == "edge") zrot(90) xrot(180) grid_corner_edge(y);
+   if (end_b == "edge") grid_corner_edge(y);
 }
 
 module grid_t(y, bottom_corner, top_edge)
@@ -227,7 +242,7 @@ render() {
 	*/
 
 	// Corner
-	yrot(45+90) xrot(90) grid_corner(grid_size_y, false, false);
+	yrot(45+90) xrot(90) grid_corner(grid_size_y, "edge", "edge");
 	//grid_t(grid_size_y, true, true);
          //zrot_copies([0,90]) xmove(14) xrot(90) grid(1, 2);
 
