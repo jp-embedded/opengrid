@@ -741,6 +741,7 @@ module rail3(length)
    //snap();
 }
 
+overlap_fix = 0.1;
 module rail2(length)
 {
    // attempt 1
@@ -749,13 +750,20 @@ module rail2(length)
 
    // attempt 2
    up(7) left(rail_width) zcopies(7,2) rail(l=length*tile_size, w = 5, h = rail_width, orient=RIGHT, chamfer=0.5);
-   left(5-2) up(7) zcopies(7,2) rail(l=length*tile_size, w = 5, h = rail_width, orient=LEFT, chamfer=0.5);
+   left(5-2+overlap_fix) up(7) zcopies(7,2) rail(l=length*tile_size, w = 5, h = rail_width, orient=LEFT, chamfer=0.5);
 
    gap = 0.2;
-   left(rail_width+gap) up(7/2) cuboid([3-gap*2, length*tile_size - 5, 7], anchor=RIGHT+BOTTOM);
+   left(rail_width+gap+overlap_fix) up(7/2) cuboid([3-gap, length*tile_size - 5, 7], anchor=RIGHT+BOTTOM);
 }
 
-module drawer(length, width)
+module drawer_rest(length, width)
+{
+   n = length * 2/3;
+   ycopies(42,n) right(1) top_half() xrot(90) half_joiner_clear(overlap=2, l=6, w=5, anchor=RIGHT);
+   ycopies(42,n) left(3.2) cuboid([2,8,3], anchor=RIGHT+BOTTOM, chamfer=0.5, except=BOTTOM);
+}
+
+module drawer_rail(length)
 {
    slop=0.2;
    /* attempt 1
@@ -772,7 +780,7 @@ module drawer(length, width)
    //right(1.8) slider(l=length*tile_size, w = 4, h = rail_width, chamfer = 0, base=2/*tile_height/2 + 1*/, wall = 1.5, spin=90, $slop=0.2);
 
    // attempt 4
-   difference() {
+   left(overlap_fix) difference() {
       right(0.6 /*drawer_wall_width*/) up(7) zcopies(7,2) yrot(90) slider(l=length*tile_size, w = 5, h = rail_width, chamfer = 0, base=2/*tile_height/2 + 1*/, wall = 1-slop, spin=90, $slop=slop);
       right(2.4) up(7) cuboid([5,length*tile_size,5], anchor=LEFT);
    }
@@ -786,8 +794,15 @@ module drawer(length, width)
       cuboid([1, length*tile_size, 4], anchor=BOTTOM+RIGHT); // gridfinity base simulator
    }
    */
+   drawer_rest(length, width);
+}
 
-   left(tile_size*width) gridfinity(length*2/3, width*2/3);
+module drawer(length, width)
+{
+   difference() {
+      left(tile_size*width) gridfinity(length*2/3, width*2/3);
+      drawer_rest(length, width);
+   }
 }
 
 render() {
@@ -795,7 +810,10 @@ render() {
 
    right(1) up(tile_size/2) yrot(-90) rail3(length);
    rail2(length);
-   left(side_space_total - drawer_wall_width) drawer(length, width);
+   left(side_space_total - drawer_wall_width) {
+      drawer_rail(length);
+      drawer(length, width);
+   }
 
    //cubetruss(extends=3, bracing=false, size=28);
 }
