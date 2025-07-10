@@ -6,14 +6,9 @@ include <BOSL2/cubetruss.scad>
 length = 3;
 edge_a = "corner"; // [ "none", "corner", "edge"]
 edge_b = "none"; // [ "none", "corner", "edge"]
-snaps = "clip"; // [ "none", "clip", "rabbit"]
+snaps = "clip"; // [ "clip", "rabbit"]
 
 /* [Hidden] */
-
-edge_left = false;
-edge_right = false;
-edge_top = false;
-edge_bottom = false;
 
 e = EPSILON;
 
@@ -66,16 +61,17 @@ module socket()
 }
 
 
-module grid(x, y)
+module grid_half_corner(y)
 {
+   x = 1;
    difference() {
-      grid_copies(spacing = tile_size, n = [x, y]) tile();
+      grid_copies(spacing = tile_size, n = [x, y]) left_half() tile();
 
       // Snap sockets
-      if (!edge_bottom) ymove(-y*tile_size/2) xcopies(spacing = tile_size, n = x-1) socket();
-      if (!edge_top) zrot(180) ymove(-y*tile_size/2) xcopies(spacing = tile_size, n = x-1) socket();
-      if (!edge_right) zrot(90) ymove(-x*tile_size/2) xcopies(spacing = tile_size, n = y-1) socket();
-      if (!edge_left) zrot(270) ymove(-x*tile_size/2) xcopies(spacing = tile_size, n = y-1) socket();
+      ymove(-y*tile_size/2) xcopies(spacing = tile_size, n = x-1) socket();
+      zrot(180) ymove(-y*tile_size/2) xcopies(spacing = tile_size, n = x-1) socket();
+      zrot(90) ymove(-x*tile_size/2) xcopies(spacing = tile_size, n = y-1) socket();
+      zrot(270) ymove(-x*tile_size/2) xcopies(spacing = tile_size, n = y-1) socket();
    }
 }
 
@@ -94,7 +90,7 @@ support_w = 1.4;
 module grid_corner_straight(y, support_inside)
 {
 	corner_chamfer = 0.4;
-	xrot(90) yrot_copies([0, 90]) left_half() grid(1, y);
+	xrot(90) yrot_copies([0, 90]) left_half() grid_half_corner(y);
 	if (support_inside) {
 		fwd(tile_height/2) cuboid([tile_size/2, support_w, tile_size*y], anchor=RIGHT+FRONT);
 		left(tile_height/2) cuboid([support_w, tile_size/2, tile_size*y], anchor=LEFT+BACK);
@@ -159,11 +155,6 @@ module grid_corner(y, end_a, end_b)
 
    if (end_a == "edge") zrot(90) xrot(180) grid_corner_edge(y);
    if (end_b == "edge") grid_corner_edge(y);
-}
-
-module edge_corner_a(size)
-{
-   fwd(tile_size/2) back_half() grid(size, 1);
 }
 
 render() {
