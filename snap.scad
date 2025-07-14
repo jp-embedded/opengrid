@@ -70,7 +70,7 @@ module top_snap()
    difference() {
 
       // insert
-      left(tile_size/2) cuboid([3, tile_size, tile_height/2+e], anchor=BOTTOM+LEFT);
+      up(e)left(tile_size/2) cuboid([3, tile_size, tile_height/2-2*e], anchor=BOTTOM+LEFT);
       tile(grove = true, chamfer=false, gap = part_gap);
    }
 
@@ -109,7 +109,7 @@ module snap(vertial = false, directional = true)
 	difference() {
 
 		// insert
-		cuboid([tile_size, tile_size, tile_height/2+e], anchor=BOTTOM);
+		up(e) cuboid([tile_size, tile_size, tile_height/2-2*e], anchor=BOTTOM);
 		tile(grove = false, chamfer = false, gap = part_gap);
 
 		if (vertial) {
